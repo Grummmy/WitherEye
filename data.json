@@ -1,1 +1,43 @@
-{}
+{
+    "minecraft-launchers": [
+        "minecraft",
+        "curseforge",
+        "gdlauncher",
+        "lunar",
+        "feather",
+        "badlion",
+        "voidswrath",
+        "atlauncher",
+        "flauncher",
+        "tlauncher",
+        "multiMC",
+        "prism",
+        "impact",
+        "sigma",
+        "future",
+        "liquidbounce",
+        "jigsaw",
+        "flux",
+        "vape",
+        "novoline",
+        "nursultan",
+        "nurik",
+        "newlauncher",
+        "modrinth",
+        "celka",
+        "celestial",
+        "inertia"
+    ],
+    "cheats": [
+        ".akr", ".wex", "akrien", "akrienantileek", "archware", "autochest", "betterclicker", "boberware",
+        "celestial", "cheststealer", "deadcode", "destroy", "editme", "eternity", "exloader", "flauncher",
+        "freecam", "future", "gishcode", "impact", "inertia", "jigsaw", "konas", "matix", "mousetweaks",
+        "nightmare", "norender", "norules", "nursultan", "pyro", "r3d", "rich", "richpremium", "rusherhack",
+        "sigma", "vape", "wexside", "wild", "wintware", "wurst", "zamorozka", "ares", "aristois", "bariton",
+        "bleachhack", "cabaletta", "celka", "xray", "cortex", "dauntiblyat", "doomsday", "hitbox", "hits",
+        "itemscroller", "liquidbounce", "mc100", "meteor", "nuric", "pivo", "rename_me_please", "troxil", "x-ray",
+        "ipn", "inventoryprofilesnext", "inventory", "elytra", "autototem", "clientcommands", "diamondsim",
+        "autopilot", "autoattack", "cleancut", "autoswitch", "autotool", "itemswapper", "lavaclearview",
+        "tweakeroo", "invmove", "kami"
+    ]
+}
