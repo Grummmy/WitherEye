@@ -1,12 +1,6 @@
-import os, subprocess, requests, re, json, psutil
+import os, subprocess, requests, re, json, psutil, win32api
 from platform import uname
 from datetime import datetime
-
-"""
-1. find minecraft
-2. find Java, check version(s) and pathes
-3. find all java/javaw processes
-"""
 
 logo = "WitherEye"
 platform = uname()
@@ -20,7 +14,7 @@ def walk(path=".", n:int=-1):
         path (str): Starting path (default: ".").
         n (int): Max depth (-1 for unlimited, 1 to walk through `path` only).
     Yields:
-        tuple: (root, dirs, files) for each directory.
+        tuple: (root, dirs, files) for each directory. (same as original os.walk())
     """
     path = os.path.abspath(path)
     for root, dirs, files in os.original_walk(path):
@@ -46,30 +40,54 @@ def load_data() -> dict:
     
     return data
 
-def search(path=".", n=2):
+data = load_data()
+mc_launchers = re.compile(r"\b(" + "|".join(data["minecraft-launchers"]) + r")\b", re.IGNORECASE)
+cheats = re.compile(r"\b(" + "|".join(data["cheats"]) + r")\b", re.IGNORECASE)
+
+class Mpath:
+    def __init__(self, path:str):
+        self.path = path
+    
+    def __str__(self):
+        return self.path
+    
+    @property
+    def f(self):
+        return mc_launchers.sub(r"\033[1m\1\033[22m", self.path)
+
+def check_path(path:str) -> tuple[str, str] | None:
+    global mc_launchers
+
+    if match:= mc_launchers.search(path):
+        path = path[:path[match.end()-1:].find(os.sep)+match.end()-1]
+        return path, mc_launchers.sub(r"\033[1m\1\033[22m", path)
+    else:
+        return None
+
+def search(path="."):
     """
     NOT DONE, YET
     
     should check directory for targeted words
     """
-    if n == 0:
-        return
+    for root, dirs, files in os.walk(path):
+        for file in files:
+            if cheats.search(file):
+                print(f"Found cheat: {os.path.join(root, file)}")
 
-    for file in os.walk(path):
-        pass
-
-def find_minecraft(mc_launchers:re.Pattern, system:str, p:bool=True) -> list[tuple[str, str]]:
+def find_minecraft(p:bool=True) -> list[tuple[str, str]]:
     """
     Finds Minecraft directories based on a regex pattern.
     if mc_launchers.search(potential_minecraft_dir)
-
-        mc_launchers (re.Pattern): Compiled regex pattern to match directories.
-        system (str): OS identifier ('Windows' or 'Linux').
+    
+    Args:
         p (bool, optional): If True, prints found directories. Defaults to True.
 
     Returns:
         list[tuple[str, str]]: List of tuples with raw and highlighted paths.
     """
+    global mc_launchers, platform
+
     generator = os.walk(os.environ.get("APPDATA"), 1) if platform.system[0] == "W" else os.walk(os.environ.get("HOME"), 3)
     minecraft = []
     for root, dirs, files in generator:
@@ -77,7 +95,7 @@ def find_minecraft(mc_launchers:re.Pattern, system:str, p:bool=True) -> list[tup
             if mc_launchers.search(dir):
                 minecraft.append((os.path.join(root, dir), root + os.sep + mc_launchers.sub(r"\033[1m\1\033[22m", dir)))
     
-    if system[0] == "W":
+    if platform.system[0] == "W":
         for disk in psutil.disk_partitions():
             for root, dirs, files in os.walk(disk.mountpoint, 2):
                 for dir in dirs:
@@ -91,14 +109,14 @@ def find_minecraft(mc_launchers:re.Pattern, system:str, p:bool=True) -> list[tup
     # ask user about Minecraft location, if Minecraft wasn't found
     while not minecraft or not os.path.exists(minecraft[0][0]):
         try:
-            minecraft = input('Minecraft was not found. Please enter a \033[1mvalid path\033[0m, or exit(Ctrl+C) the program.\n - A folder-choosing window is \033[4mavailable only on Windows\033[0m, print \033[3mmenu\033[0m to call it.\n - If you want to pass several pathes, write each path separated by " | "(space, vertical bar, space).\n   └╴Example: first/minecraft/dir | second/minecraft/dir\n').strip()
+            minecraft = input('Minecraft was not found. Please enter a \033[1mfull valid path\033[0m, or exit(Ctrl+C) the program.\n - A folder-choosing window is \033[4mavailable only on Windows\033[0m, print \033[3mmenu\033[0m to call it.\n - If you want to pass several pathes, write each path separated by " | "(space, vertical bar, space).\n   └╴Example: first/minecraft/dir | second/minecraft/dir\n').strip()
             if minecraft == "menu":
-                if system[0] == "W":
-                    minecraft = []
+                if platform.system[0] == "W":
+                    minecraft =[]
                     while True:
                         proccess = subprocess.run('powershell -command "& {Add-Type -AssemblyName System.windows.forms; $f=New-Object System.Windows.Forms.FolderBrowserDialog; $f.ShowDialog(); $f.SelectedPath}"', capture_output=True, text=True)
                         if proccess.stdout[:2] == "OK":
-                            path += proccess.stdout.strip().split("\n")[1]
+                            path = proccess.stdout.strip().split("\n")[1]
                             minecraft.appned((path, os.path.dirname(path) + os.sep + mc_launchers.sub(r"\033[1m\1\033[22m", os.path.basename(path))))
                         if more := input("Do you want to add one more path?[y/N] ").strip().lower() or more == "" or more[0] not in ["y", "н"]:
                             break
@@ -128,30 +146,49 @@ def find_minecraft(mc_launchers:re.Pattern, system:str, p:bool=True) -> list[tup
     
     return minecraft
 
-def check_processes(pattern:re.Pattern, p:bool=True) -> list[psutil.Process]:
+def check_processes(p:bool=True) -> tuple[list[psutil.Process], list[tuple[str, str]]]:
     """
-    NOT DONE, YET
-    
     Checks running java/minecraft processes, prints info about them
     
     Returns:
         list[psutil.Process] - found processes list
+        list[tuple[str, str]] - found minecraft peathes list
     """
+    global mc_launchers, platform
+
+    pattern = re.compile(mc_launchers.pattern.replace(r")\b", r"|gnome)\b"), re.IGNORECASE)
     procs = []
+    pathes = []
     for proc in psutil.process_iter(['name', 'pid', 'status', 'create_time','exe', 'cwd', 'cmdline']):
         if pattern.search(proc.info['name']) or pattern.search(proc.info['exe'] if proc.info['exe'] else ""):
             proc = proc.info
             procs.append(psutil.Process(proc['pid']))
-            if p:
-                print(f"{pattern.sub(rf"\033[1m\g<0>\033[22m", proc['name'])}\n ┣╸ {proc['status']} ({proc['pid']})\n ┣╸ Started on {datetime.fromtimestamp(proc['create_time'])}\n ┣╸ Executable: {proc['exe']}\n ┣╸ Working dir: {proc['cwd']}\n ┗╸ CLI args: {proc["cmdline"]}")
 
-    return procs
+            if path := check_path(proc['exe']):
+                pathes.append(path)
+
+            if p:
+                file_description = ""
+                try:
+                    file_description = " (" + win32api.GetFileVersionInfo(proc['exe'], "\\StringFileInfo\\040904b0\\FileDescription") + ")" if platform.system[0] == "W" else ""
+                except Exception as e:
+                    print(f"Error while getting the description of {proc['exe']}:\n{e}")
+                print(f"{pattern.sub(rf"\033[1m\1\033[22m", proc['name'])}{file_description}\n ┣╸ {proc['status']} ({proc['pid']})\n ┣╸ Started on {datetime.fromtimestamp(proc['create_time'])}\n ┣╸ Executable: {proc['exe']}\n ┣╸ Working dir: {proc['cwd']}\n ┗╸ CLI args: {proc["cmdline"]}")
+
+    return procs, pathes
 
 def main():
-    data = load_data()
-    mc_launchers = re.compile(r"\b(" + "|".join(data["minecraft-launchers"]) + r")\b", re.IGNORECASE)
-    find_minecraft(mc_launchers, platform.system)
-    check_processes(re.compile(mc_launchers.pattern.replace(r")\b", r"|java)\b"), re.IGNORECASE))
+    summary = {}
+    summary['minecraft'] = find_minecraft()
+    proces = check_processes()
+    summary['processes'] = proces[0]
+    
+    for path in proces[1]:
+        if path not in summary['minecraft']:
+            summary['minecraft'].append(path)
+    
+
+
 
 if __name__ == "__main__":
     main()
