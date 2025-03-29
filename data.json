@@ -38,7 +38,7 @@
         "itemscroller", "liquidbounce", "mc100", "meteor", "nuric", "pivo", "rename_me_please", "troxil", "x-ray",
         "ipn", "inventoryprofilesnext", "inventory", "elytra", "autototem", "clientcommands", "diamondsim",
         "autopilot", "autoattack", "cleancut", "autoswitch", "autotool", "itemswapper", "lavaclearview",
-        "tweakeroo", "invmove", "kami"
+        "tweakeroo", "invmove", "kami", "ccbluex"
     ],
     "all": [
         "worlddownloader", "evaware", "viaversion", "db>-r+m^mxaa>ft", "topkautobuy", "viafabric", "aimbot",
@@ -69,6 +69,6 @@
         "ezhitboxes", "setboundingbox", "renameme", "nursultanloader", "blockesp", "gishcode", "celestial", "crackclient",
         "wissendclient", "exire", "vec.dll", "wildclient", "bushroot", "mob_hitbox", "nuric", "elytra_swap",
         "player_highlighter", "konas", "ares", "sigma", "meteorclient", "<-8dd", "wild", "baritone", "squad", "viarewind",
-        "cortex", "rename_me_please", "crackwareclient", "pw1(/s", "archware"
+        "cortex", "rename_me_please", "crackwareclient", "pw1(/s", "archware", "ccbluex"
     ]
 }
